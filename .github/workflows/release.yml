@@ -1,0 +1,73 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers on tags like v1.0.0
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build ${{ matrix.rid }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - rid: win-x64
+            artifact: MarimoLauncher-windows-x64.zip
+          - rid: linux-x64
+            artifact: MarimoLauncher-linux-x64.tar.gz
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore MarimoLauncher.csproj
+
+      - name: Publish (self-contained, ${{ matrix.rid }})
+        run: >
+          dotnet publish MarimoLauncher.csproj -c Release -f net8.0
+          -r ${{ matrix.rid }} --self-contained
+          -p:Version=${GITHUB_REF_NAME#v}
+          -o ./publish
+
+      - name: Install NSIS
+        if: matrix.rid == 'win-x64'
+        run: sudo apt-get update && sudo apt-get install -y nsis zip
+
+      - name: Build Windows installer
+        if: matrix.rid == 'win-x64'
+        run: makensis -DPUBLISH_DIR="$PWD/publish" packaging/installer.nsi
+
+      - name: Package (Windows)
+        if: matrix.rid == 'win-x64'
+        run: zip -r "${{ matrix.artifact }}" -j ./publish/*
+
+      - name: Package (Linux)
+        if: matrix.rid == 'linux-x64'
+        run: chmod +x ./publish/MarimoLauncher && tar -czf "${{ matrix.artifact }}" -C ./publish .
+
+      - name: Create Release (Windows)
+        if: matrix.rid == 'win-x64'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            MarimoLauncher-windows-x64.zip
+            packaging/MarimoLauncher-Setup.exe
+          generate_release_notes: true
+
+      - name: Create Release (Linux)
+        if: matrix.rid == 'linux-x64'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            MarimoLauncher-linux-x64.tar.gz
+          generate_release_notes: true
