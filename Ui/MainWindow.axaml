@@ -1,0 +1,78 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:MarimoLauncher.Ui"
+        xmlns:views="using:MarimoLauncher.Ui"
+        x:Class="MarimoLauncher.Ui.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="Marimo Launcher"
+        Width="880" Height="640"
+        MinWidth="660" MinHeight="440">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="0">
+
+        <!-- Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="20,20,20,8">
+            <StackPanel Grid.Column="0" Spacing="2">
+                <TextBlock Text="My notebooks" FontSize="19" FontWeight="SemiBold" />
+                <TextBlock Text="Notebooks you've opened with Marimo Launcher, newest use first. Marimo runs on your machine; this is only the list."
+                           FontSize="13" Opacity="0.72" TextWrapping="Wrap" />
+            </StackPanel>
+            <Button Grid.Column="1" Classes="primary" Command="{Binding AddNotebookCommand}"
+                    VerticalAlignment="Top">Add notebook</Button>
+        </Grid>
+
+        <!-- Content -->
+        <Panel Grid.Row="1">
+            <ScrollViewer x:Name="ListScroll" Margin="20,4" HorizontalScrollBarVisibility="Disabled"
+                          IsVisible="{Binding HasNotebooks}">
+                <ItemsControl ItemsSource="{Binding Notebooks}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:NotebookCardViewModel">
+                            <views:NotebookCard />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Empty state -->
+            <Border x:Name="EmptyState" Classes="layer-card" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Padding="32" MaxWidth="440" BorderThickness="1" BorderBrush="{DynamicResource KumoBrushBorderPrimary}"
+                    IsVisible="{Binding !HasNotebooks}">
+                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                    <TextBlock Text="No notebooks yet" FontSize="16" FontWeight="Medium"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="Click &quot;Add notebook&quot;, drag a .py file into this window, or right-click a notebook in your file browser and choose &quot;Open as marimo notebook&quot;."
+                               TextWrapping="Wrap" Opacity="0.75" TextAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Panel>
+
+        <!-- Toasts (bottom-right overlay over the content row, auto-dismiss) -->
+        <ItemsControl Grid.Row="1" ItemsSource="{Binding Toasts}"
+                      HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                      Margin="0,0,16,16" ZIndex="1000">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Spacing="10" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:ToastViewModel">
+                    <Border Classes="toast" Classes.info="{Binding !IsError}" Classes.error="{Binding IsError}">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <TextBlock Grid.Column="0" Text="{Binding Message}" TextWrapping="Wrap" MaxWidth="440" />
+                            <Button Grid.Column="1" Classes="ghost" Command="{Binding CloseCommand}"
+                                    VerticalAlignment="Center" Height="28" Padding="8,0"
+                                    ToolTip.Tip="Dismiss">×</Button>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </Grid>
+</Window>

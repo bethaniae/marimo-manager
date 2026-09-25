@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- Rounded app background -->
+  <rect x="1" y="1" width="30" height="30" rx="7" fill="#2563EB"/>
+
+  <!-- Notebook glyph: page with folded corner -->
+  <path d="M10 7 h12 a2 2 0 0 1 2 2 v14 a2 2 0 0 1 -2 2 h-12 a2 2 0 0 1 -2 -2 v-14 a2 2 0 0 1 2 -2 z"
+        fill="#FFFFFF" opacity="0.95"/>
+  <!-- Folded corner -->
+  <path d="M19 7 h3 l2 4 h-3 z" fill="#FFFFFF" opacity="0.8"/>
+
+  <!-- Code lines -->
+  <path d="M13 15 l-2 -2 l2 -2" stroke="#2563EB" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M19 11 l2 2 l-2 2" stroke="#2563EB" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M17 9 l-2 6" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round"/>
+
+  <!-- Base line -->
+  <line x1="13" y1="21" x2="19" y2="21" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round"/>
+
+
+</svg>

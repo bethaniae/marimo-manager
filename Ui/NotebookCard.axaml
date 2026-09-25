@@ -1,0 +1,91 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MarimoLauncher.Ui"
+             x:Class="MarimoLauncher.Ui.NotebookCard"
+             x:DataType="vm:NotebookCardViewModel">
+
+    <UserControl.Resources>
+        <StreamGeometry x:Key="PencilIcon">M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z</StreamGeometry>
+        <StreamGeometry x:Key="TrashIcon">M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z</StreamGeometry>
+        <StreamGeometry x:Key="CopyLinkIcon">M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h10v14z</StreamGeometry>
+        <StreamGeometry x:Key="StopIcon">M6 6h12v12H6z</StreamGeometry>
+        <StreamGeometry x:Key="OpenIcon">M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L17.41 6.41V10H19V3h-5z</StreamGeometry>
+    </UserControl.Resources>
+
+    <Border x:Name="RootBorder" Classes="layer-card" Padding="16" Margin="8" Width="360"
+            DoubleTapped="OnDoubleTapped">
+        <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
+
+            <!-- Notebook name + inline icon actions + state badges -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto">
+                <TextBlock Grid.Column="0" Text="{Binding DisplayName}" FontSize="16" FontWeight="SemiBold"
+                           TextTrimming="CharacterEllipsis" IsVisible="{Binding !IsRenaming}"
+                           VerticalAlignment="Center" />
+                <Button Grid.Column="1" Classes="ghost" Command="{Binding BeginRenameCommand}"
+                        Height="30" Width="30" Padding="6" VerticalAlignment="Center"
+                        IsVisible="{Binding !IsRenaming}" ToolTip.Tip="Rename">
+                    <PathIcon Data="{StaticResource PencilIcon}" />
+                </Button>
+                <Button Grid.Column="2" Classes="ghost" Command="{Binding RemoveCommand}"
+                        Foreground="{DynamicResource KumoBrushTextDanger}"
+                        Height="30" Width="30" Padding="6" VerticalAlignment="Center"
+                        IsVisible="{Binding !IsRenaming}" ToolTip.Tip="Remove from the list (file is not deleted)">
+                    <PathIcon Data="{StaticResource TrashIcon}" />
+                </Button>
+                <Border Grid.Column="3" Classes="badge success" IsVisible="{Binding HasReadyUrl}">
+                    <TextBlock Text="Running" />
+                </Border>
+                <Border Grid.Column="4" Classes="badge warning" IsVisible="{Binding FileMissing}">
+                    <TextBlock Text="File missing" />
+                </Border>
+            </Grid>
+
+            <!-- Rename editor -->
+            <StackPanel Grid.Row="1" Spacing="8" IsVisible="{Binding IsRenaming}">
+                <TextBox Text="{Binding RenameText}" PlaceholderText="Display name">
+                    <TextBox.KeyBindings>
+                        <KeyBinding Gesture="Enter" Command="{Binding ConfirmRenameCommand}" />
+                        <KeyBinding Gesture="Escape" Command="{Binding CancelRenameCommand}" />
+                    </TextBox.KeyBindings>
+                </TextBox>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Classes="primary" Command="{Binding ConfirmRenameCommand}">Save</Button>
+                    <Button Classes="ghost" Command="{Binding CancelRenameCommand}">Cancel</Button>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Info line: either running state or path + last used -->
+            <StackPanel Grid.Row="1" Spacing="2">
+                <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsRunning}">
+                    <TextBlock Text="{Binding RunningStateText}" FontSize="12" />
+                </StackPanel>
+                <StackPanel IsVisible="{Binding !IsRunning}" Spacing="2">
+                    <TextBlock Text="{Binding PathText}" FontSize="12" Opacity="0.7"
+                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding PathText}" />
+                    <TextBlock Text="{Binding LastUsedText}" FontSize="12" Opacity="0.65" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Actions while idle -->
+            <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" IsVisible="{Binding !IsRunning}">
+                <Button Classes="primary" Command="{Binding LaunchRunCommand}" ToolTip.Tip="Run the notebook (read-only view)">Run</Button>
+                <Button Command="{Binding LaunchEditCommand}" ToolTip.Tip="Open in edit mode">Edit</Button>
+            </StackPanel>
+
+            <!-- Actions while running: Stop is always available, copy/access once the URL is known -->
+            <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsRunning}">
+                <Button Classes="primary" Command="{Binding CopyLinkCommand}" IsVisible="{Binding HasReadyUrl}"
+                        ToolTip.Tip="Copy the notebook URL">Copy link</Button>
+                <Button Command="{Binding OpenLinkCommand}" IsVisible="{Binding HasReadyUrl}"
+                        ToolTip.Tip="Open it in your browser">Access page</Button>
+                <Button Classes="danger" Command="{Binding StopCommand}"
+                        ToolTip.Tip="Kill the marimo process for this notebook">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <PathIcon Data="{StaticResource StopIcon}" />
+                        <TextBlock Text="Stop" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>
