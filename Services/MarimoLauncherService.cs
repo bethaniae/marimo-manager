@@ -140,6 +140,7 @@ public sealed class MarimoLauncherService
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            RedirectStandardInput = true,
             CreateNoWindow = !RuntimeInformation.IsOSPlatform(OSPlatform.Windows),
         };
         psi.ArgumentList.Add(mode == MarimoMode.Edit ? "edit" : "run");
@@ -154,7 +155,15 @@ public sealed class MarimoLauncherService
         psi.WorkingDirectory = Path.GetDirectoryName(entry.Path);
 
         // marimo does not need the venv activated: its scripts already point
-        // at the environment's own interpreter.
+        // at the environment's own interpreter. But its sandbox feature looks
+        // for `uv` (and tooling) on PATH, so the venv's bin dir must be there.
+        var venvBin = Path.GetDirectoryName(marimoExe);
+        if (venvBin is not null && Directory.Exists(venvBin))
+        {
+            var currentPath = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
+            psi.Environment["PATH"] = $"{venvBin}{Path.PathSeparator}{currentPath}";
+        }
+
         Process? process;
         try
         {
@@ -188,6 +197,13 @@ public sealed class MarimoLauncherService
         process.ErrorDataReceived += (_, e) => OnMarimoLine(e.Data);
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
+
+        // marimo sometimes asks confirmation questions on stdin (e.g. "Run in
+        // a sandboxed venv containing this notebook's dependencies [Y/n]?").
+        // There is no console to answer on, which would hang forever, so we
+        // always answer "yes" and keep the pipe open (closing it could surface
+        // as EOF while marimo is still reading).
+        _ = process.StandardInput.WriteLineAsync("y");
 
         _ = WatchReadyAsync();
 

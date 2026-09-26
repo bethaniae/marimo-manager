@@ -141,7 +141,7 @@ public sealed class ManagedMarimoEnvironment
             return false;
         }
 
-        var psi = PythonProcess(python, "-m", "pip", "install", "--disable-pip-version-check", "marimo");
+        var psi = PythonProcess(python, "-m", "pip", "install", "--disable-pip-version-check", "marimo", "uv");
         return await RunQuietlyAsync(psi, "Could not install marimo");
     }
 
