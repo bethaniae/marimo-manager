@@ -141,7 +141,7 @@ public sealed class MarimoLauncherService
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             RedirectStandardInput = true,
-            CreateNoWindow = !RuntimeInformation.IsOSPlatform(OSPlatform.Windows),
+            CreateNoWindow = true,
         };
         psi.ArgumentList.Add(mode == MarimoMode.Edit ? "edit" : "run");
         psi.ArgumentList.Add(entry.Path);
