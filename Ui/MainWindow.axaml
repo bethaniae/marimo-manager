@@ -17,8 +17,10 @@
                 <TextBlock Text="Notebooks you've opened with Marimo Launcher, newest use first. Marimo runs on your machine; this is only the list."
                            FontSize="13" Opacity="0.72" TextWrapping="Wrap" />
             </StackPanel>
-            <Button Grid.Column="1" Classes="primary" Command="{Binding AddNotebookCommand}"
-                    VerticalAlignment="Top">Add notebook</Button>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                <Button Classes="ghost" Command="{Binding CreateNotebookCommand}">Create notebook</Button>
+                <Button Classes="primary" Command="{Binding AddNotebookCommand}">Add notebook</Button>
+            </StackPanel>
         </Grid>
 
         <!-- Content -->
@@ -46,7 +48,9 @@
                 <StackPanel Spacing="8" HorizontalAlignment="Center">
                     <TextBlock Text="No notebooks yet" FontSize="16" FontWeight="Medium"
                                HorizontalAlignment="Center" />
-                    <TextBlock Text="Click &quot;Add notebook&quot;, drag a .py file into this window, or right-click a notebook in your file browser and choose &quot;Open as marimo notebook&quot;."
+                    <Button Classes="ghost" Command="{Binding CreateNotebookCommand}"
+                            HorizontalAlignment="Center">Create notebook</Button>
+                    <TextBlock Text='Click "Add notebook" or "Create notebook", drag a .py file into this window, or right-click a notebook in your file browser and choose "Open as marimo notebook".'
                                TextWrapping="Wrap" Opacity="0.75" TextAlignment="Center" />
                 </StackPanel>
             </Border>

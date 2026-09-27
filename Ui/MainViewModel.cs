@@ -25,6 +25,8 @@ public sealed class MainViewModel : ObservableObject
 
     public AsyncRelayCommand AddNotebookCommand { get; }
 
+    public AsyncRelayCommand CreateNotebookCommand { get; }
+
     public void SetStatus(string message, bool isError = false)
     {
         Dispatcher.UIThread.Post(() =>
@@ -56,6 +58,7 @@ public sealed class MainViewModel : ObservableObject
         _ = WarmUpEnvironmentAsync();
 
         AddNotebookCommand = new AsyncRelayCommand(AddByPickerAsync);
+        CreateNotebookCommand = new AsyncRelayCommand(CreateNotebookAsync);
 
         LinuxDesktopIntegration.EnsureDesktopEntry();
         Reload();
@@ -152,6 +155,82 @@ public sealed class MainViewModel : ObservableObject
             .ToList();
 
         AddPaths(paths);
+    }
+
+    /// <summary>
+    /// "Create notebook" is a Save-as flow: the user picks where to put the
+    /// new file and gives it a name, we scaffold an empty marimo notebook
+    /// there and register it so it appears in the list.
+    /// </summary>
+    private async Task CreateNotebookAsync()
+    {
+        if (_storageProvider is null)
+        {
+            return;
+        }
+
+        var file = await _storageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Create marimo notebook",
+            SuggestedFileName = "untitled",
+            DefaultExtension = "py",
+            FileTypeChoices = new List<FilePickerFileType>
+            {
+                new("Python notebook") { Patterns = new[] { "*.py" } },
+            },
+        });
+
+        if (file is null)
+        {
+            return; // user cancelled
+        }
+
+        var path = file.TryGetLocalPath();
+        if (string.IsNullOrEmpty(path))
+        {
+            SetStatus("Could not resolve the chosen location.", isError: true);
+            return;
+        }
+
+        try
+        {
+            var template = NewNotebookTemplate.Build("marimo");
+            var target = UniquePath(path);
+            await File.WriteAllTextAsync(target, template);
+
+            var entry = _registry.AddOrUpdate(target);
+            Reload();
+            SetStatus($"Created \"{entry.DisplayName}\". Open it to start editing.");
+        }
+        catch (Exception ex)
+        {
+            SetStatus($"Could not create the notebook: {ex.Message}", isError: true);
+        }
+    }
+
+    private static string UniquePath(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return path;
+        }
+
+        var directory = Path.GetDirectoryName(path) ?? ".";
+        var name = Path.GetFileNameWithoutExtension(path);
+        var extension = Path.GetExtension(path);
+
+        // Guard against (unlikely) concurrent creation with the same name.
+        for (var attempt = 1; attempt < 1000; attempt++)
+        {
+            var candidate = Path.Combine(directory, $"{name}-{attempt}{extension}");
+            if (!File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        var unique = $"{name}-{Guid.NewGuid():N}{extension}";
+        return Path.Combine(directory, unique);
     }
 
     public void AddPaths(IReadOnlyList<string> paths)
